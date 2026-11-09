@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda de reuniões</title>
+<style>
+:root{--bg:#eceff2;--surface:#fff;--text:#1d2733;--muted:#66727f;--line:#d9dee4;--accent:#0f6e8c;--on-accent:#fff;--danger:#b4432f;--ok:#23845a;--chip:#e2edf1}
+@media(prefers-color-scheme:dark){:root{--bg:#10161c;--surface:#18212a;--text:#e6ebf0;--muted:#92a0ad;--line:#2a3541;--accent:#5bb5d3;--on-accent:#0b1318;--danger:#ee8a77;--ok:#58c895;--chip:#22333d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,.time{font-family:Georgia,"Iowan Old Style",serif}
+header{background:var(--surface);border-bottom:1px solid var(--line)}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0 0;flex-wrap:wrap}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.01em}
+.status{display:flex;gap:14px;color:var(--muted);font-size:13px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);margin-right:6px}
+.dot.on{background:var(--ok)}.dot.off{background:var(--danger)}
+nav{display:flex;gap:4px;margin-top:14px}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font:inherit;font-weight:600;color:var(--muted);cursor:pointer}
+nav button[aria-selected=true]{color:var(--text);border-color:var(--accent)}
+main{padding:24px 0 60px}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.bar .grow{flex:1}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--on-accent);border:0;border-radius:6px;padding:8px 16px;font-weight:600}
+.ghost{background:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px}
+.ghost:hover{border-color:var(--accent)}
+.danger{color:var(--danger)}
+select,input:not([type=checkbox]){background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+.bar select{width:auto}
+label.chk{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:14px}
+.day{display:grid;grid-template-columns:110px 1fr;gap:8px 20px;margin-bottom:28px}
+.day>h2{font-size:17px;margin:2px 0 0;font-weight:700;text-transform:capitalize;line-height:1.25}
+.day>h2 small{display:block;font:13px system-ui,sans-serif;color:var(--muted);font-weight:400}
+.slots{display:flex;flex-direction:column;gap:10px}
+.meet{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:12px 16px;display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:start}
+.meet.cancelled{border-left-color:var(--line);opacity:.65}
+.meet.cancelled .t{text-decoration:line-through}
+.time{font-size:18px;line-height:1.2}.time small{display:block;font-size:13px;color:var(--muted);font-family:system-ui,sans-serif}
+.t{font-weight:600}
+.meta{color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--chip);border-radius:99px;padding:2px 10px;font-size:13px}
+.chip.gone{background:none;border:1px dashed var(--line);color:var(--muted)}
+.acts{display:flex;gap:6px}
+.badge{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 6px;margin-left:8px;color:var(--muted);font-weight:400}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-size:13px;color:var(--muted);font-weight:600}
+td.r{text-align:right;white-space:nowrap}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:6px;padding:32px;text-align:center;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);width:min(520px,94vw);padding:22px}
+dialog::backdrop{background:rgba(10,16,22,.55)}
+dialog h2{margin:0 0 14px;font-size:20px}
+.f{display:block;margin-bottom:12px;font-size:14px;font-weight:600}
+.f input,.f select{margin-top:4px;font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+fieldset{border:1px solid var(--line);border-radius:6px;margin:0 0 12px;padding:8px 12px;max-height:150px;overflow:auto}
+legend{font-size:14px;font-weight:600;padding:0 4px}
+fieldset label{display:flex;gap:8px;align-items:center;padding:3px 0}
+.err{color:var(--danger);font-size:14px;margin:0 0 10px}
+.end{display:flex;justify-content:flex-end;gap:8px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.show{opacity:1}
+@media(max-width:640px){.day{grid-template-columns:1fr}.meet{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+
+.authbox{max-width:400px;margin:9vh auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:28px}
+.authbox h1{margin-bottom:4px}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;text-decoration:underline;padding:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px;margin-bottom:20px;max-width:520px}
+.card h2{font-size:18px;margin:0 0 12px}
+.who{color:var(--text);font-weight:600}
+[hidden]{display:none!important}
+.acts{flex-wrap:wrap;justify-content:flex-end}
+</style>
+</head>
+<body>
+<div id="auth" hidden>
+  <form class="authbox" id="aform">
+    <h1>Agenda de reuniões</h1>
+    <p class="meta" id="ahint"></p>
+    <label class="f" id="aname-l">Nome<input name="name" autocomplete="name"></label>
+    <label class="f">E-mail<input name="email" type="email" required autocomplete="email"></label>
+    <label class="f">Senha<input name="password" type="password" required minlength="8" autocomplete="current-password"></label>
+    <p class="err" id="aerr" hidden></p>
+    <button class="primary" id="asubmit" style="width:100%"></button>
+    <p class="meta" style="text-align:center"><button type="button" class="linkbtn" id="aswitch"></button></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+<header><div class="wrap">
+  <div class="top">
+    <h1>Agenda de reuniões</h1>
+    <div class="status">
+      <span><i class="dot" id="dot-m"></i>Reuniões</span><span><i class="dot" id="dot-u"></i>Autenticação</span>
+      <span class="who" id="who"></span><button class="ghost" id="logout">Sair</button>
+    </div>
+  </div>
+  <nav role="tablist">
+    <button role="tab" data-tab="meetings" aria-selected="true">Reuniões</button>
+    <button role="tab" data-tab="documents" aria-selected="false">Documentos</button>
+    <button role="tab" data-tab="account" aria-selected="false">Minha conta</button>
+  </nav>
+</div></header>
+<main class="wrap">
+  <section id="meetings">
+    <div class="bar">
+      <label class="chk"><input type="checkbox" id="hide"> Ocultar canceladas</label>
+      <span class="grow"></span>
+      <button class="primary" data-act="new-meeting">Nova reunião</button>
+    </div>
+    <div id="meet-list"></div>
+  </section>
+  <section id="documents" hidden>
+    <div class="bar">
+      <select id="dmeet" aria-label="Filtrar por reunião"></select>
+      <select id="dtype" aria-label="Filtrar por tipo"></select>
+      <span class="grow"></span>
+      <button class="primary" data-act="new-doc">Novo documento</button>
+    </div>
+    <div class="slots" id="doc-list"></div>
+  </section>
+  <section id="account" hidden>
+    <form class="card" id="pform"><h2>Seus dados</h2>
+      <label class="f">Nome<input name="name" required></label>
+      <label class="f">E-mail<input name="email" type="email" required></label>
+      <button class="primary">Salvar dados</button></form>
+    <form class="card" id="wform"><h2>Alterar senha</h2>
+      <label class="f">Senha atual<input name="cur" type="password" required autocomplete="current-password"></label>
+      <label class="f">Nova senha (mínimo 8 caracteres)<input name="new" type="password" required minlength="8" autocomplete="new-password"></label>
+      <button class="primary">Alterar senha</button></form>
+    <div class="card"><h2>Excluir conta</h2>
+      <p class="meta">Remove seu acesso. As reuniões que você organizou continuam existindo.</p>
+      <button class="ghost danger" id="delacc">Excluir minha conta</button></div>
+  </section>
+</main>
+</div>
+
+<dialog id="dlg"></dialog>
+<div id="toast" role="status"></div>
+
+<script>
+// Endereço do gateway. Ajuste se ele rodar em outro host/porta.
+const API = "http://localhost:8000";   // API Gateway: único ponto de entrada
+const AUTH_API = API, MEETINGS_API = API;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let token = localStorage.getItem("token"), me = null, users = [], meetings = [], hideCancelled = false, mode = "login";
+
+async function api(base, path, opts = {}, keepSession = false) {
+  const headers = opts.body instanceof FormData ? {} : { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  let r;
+  try { r = await fetch(base + path, { ...opts, headers }); }
+  catch { throw new Error("Serviço indisponível. Confira se ele está em execução."); }
+  if (r.status === 204) return null;
+  const data = await r.json().catch(() => null);
+  if (!r.ok) {
+    if (r.status === 401 && !keepSession) logout("Sua sessão expirou. Entre novamente.");
+    let msg = data?.detail || "Erro " + r.status;
+    if (data?.errors?.length) msg += ": " + data.errors.map(e => e.loc.slice(1).join(".") + " " + e.msg).join("; ");
+    throw new Error(msg);
+  }
+  return data;
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+// ---------- autenticação ----------
+function setMode(m, note) {
+  mode = m;
+  const reg = m === "register";
+  $("#aname-l").hidden = !reg; $("#aname-l input").required = reg;
+  $("#asubmit").textContent = reg ? "Criar conta" : "Entrar";
+  $("#aswitch").textContent = reg ? "Já tenho conta" : "Criar uma conta";
+  $("#ahint").textContent = note || (reg ? "Crie sua conta para agendar reuniões." : "Entre para ver sua agenda.");
+  $("#aform [name=password]").autocomplete = reg ? "new-password" : "current-password";
+  $("#aerr").hidden = true;
+}
+function showAuth(note) { $("#app").hidden = true; $("#auth").hidden = false; setMode("login", note); }
+function logout(note) {
+  token = null; me = null; localStorage.removeItem("token"); showAuth(note);
+}
+async function startApp() {
+  try { me = await api(AUTH_API, "/auth/me"); }
+  catch (e) { if (token) return; return showAuth(); }
+  $("#auth").hidden = true; $("#app").hidden = false;
+  $("#who").textContent = me.name;
+  $("#pform [name=name]").value = me.name; $("#pform [name=email]").value = me.email;
+  await load();
+}
+$("#aswitch").onclick = () => setMode(mode === "login" ? "register" : "login");
+$("#aform").onsubmit = async ev => {
+  ev.preventDefault();
+  const fd = new FormData(ev.target), err = $("#aerr");
+  try {
+    if (mode === "register")
+      await api(AUTH_API, "/auth/register", { method: "POST", body: JSON.stringify({ name: fd.get("name"), email: fd.get("email"), password: fd.get("password") }) }, true);
+    const res = await api(AUTH_API, "/auth/login", { method: "POST", body: JSON.stringify({ email: fd.get("email"), password: fd.get("password") }) }, true);
+    token = res.access_token; localStorage.setItem("token", token); ev.target.reset();
+    await startApp();
+  } catch (e) { err.textContent = e.message; err.hidden = false; }
+};
+$("#logout").onclick = () => logout();
+
+// ---------- dados ----------
+async function load() {
+  const [u, m] = await Promise.allSettled([api(AUTH_API, "/users"), api(MEETINGS_API, "/meetings")]);
+  $("#dot-u").className = "dot " + (u.status === "fulfilled" ? "on" : "off");
+  $("#dot-m").className = "dot " + (m.status === "fulfilled" ? "on" : "off");
+  if (u.status === "fulfilled") users = u.value; else if (token) toast("Serviço de autenticação indisponível");
+  if (m.status === "fulfilled") meetings = m.value; else if (token) toast("Serviço de reuniões indisponível");
+  render();
+}
+
+const userName = id => users.find(u => u.id === id)?.name;
+const fmtDay = d => d.toLocaleDateString("pt-BR", { weekday: "long" });
+const fmtDate = d => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+const fmtHM = d => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const REC = { weekly: "semanal", monthly: "mensal" };
+
+function render() {
+  const list = meetings.filter(m => !(hideCancelled && m.status === "cancelled"));
+  if (!list.length) {
+    $("#meet-list").innerHTML = `<div class="empty">Você ainda não tem reuniões. Use “Nova reunião” para agendar a primeira.</div>`;
+    return;
+  }
+  const days = new Map();
+  list.forEach(m => { const k = m.start_time.slice(0, 10); (days.get(k) || days.set(k, []).get(k)).push(m); });
+  $("#meet-list").innerHTML = [...days].map(([k, ms]) => {
+    const d = new Date(k + "T00:00");
+    return `<div class="day"><h2>${esc(fmtDay(d))}<small>${esc(fmtDate(d))}</small></h2><div class="slots">${ms.map(meetingCard).join("")}</div></div>`;
+  }).join("");
+}
+
+function meetingCard(m) {
+  const s = new Date(m.start_time), e = new Date(m.end_time), off = m.status === "cancelled", mine = m.organizer_id === me.id;
+  const chips = m.participant_ids.map(id => userName(id)
+    ? `<span class="chip">${esc(id === me.id ? "Você" : userName(id))}</span>` : `<span class="chip gone">Pessoa #${id} (removida)</span>`).join("");
+  const org = mine ? "Organizada por você" : "Organizada por " + (userName(m.organizer_id) || "#" + m.organizer_id);
+  const meta = [m.room, m.recurrence && "Repete: " + REC[m.recurrence], org].filter(Boolean).map(esc).join(" · ");
+  return `<article class="meet ${off ? "cancelled" : ""}">
+    <div class="time">${fmtHM(s)}<small>até ${fmtHM(e)}</small></div>
+    <div><div class="t">${esc(m.title)}${off ? '<span class="badge">cancelada</span>' : ""}</div>
+      <div class="meta">${meta}</div><div class="chips">${chips}</div></div>
+    <div class="acts"><button class="ghost" data-act="meeting-docs" data-id="${m.id}">Documentos</button>${off || !mine ? "" : `<button class="ghost" data-act="edit-meeting" data-id="${m.id}">Editar</button>
+      <button class="ghost danger" data-act="cancel-meeting" data-id="${m.id}">Cancelar</button>`}</div></article>`;
+}
+
+function openDialog(title, html, onSubmit) {
+  const d = $("#dlg");
+  d.innerHTML = `<form id="f"><h2>${title}</h2>${html}<p class="err" id="ferr" hidden></p>
+    <div class="end"><button type="button" class="ghost" data-close>Fechar</button>${onSubmit ? '<button class="primary">Salvar</button>' : ""}</div></form>`;
+  d.showModal();
+  $("#f").onsubmit = async ev => {
+    ev.preventDefault(); if (!onSubmit) return;
+    try { await onSubmit(new FormData(ev.target)); d.close(); await load(); if (!$("#documents").hidden) await loadDocs(); }
+    catch (err) { const p = $("#ferr"); p.textContent = err.message; p.hidden = false; }
+  };
+}
+
+function meetingDialog(m) {
+  const sel = new Set(m?.participant_ids || []);
+  const others = users.filter(u => u.id !== me.id);
+  const people = others.length ? others.map(u => `<label><input type="checkbox" name="p" value="${u.id}" ${sel.has(u.id) ? "checked" : ""}> ${esc(u.name)}</label>`).join("")
+    : "<span class='meta'>Ainda não há outras pessoas cadastradas.</span>";
+  openDialog(m ? "Editar reunião" : "Nova reunião", `
+    <label class="f">Título<input name="title" required value="${esc(m?.title)}"></label>
+    <label class="f">Sala (opcional)<input name="room" value="${esc(m?.room)}"></label>
+    <div class="two">
+      <label class="f">Início<input name="start" type="datetime-local" required value="${esc(m?.start_time.slice(0, 16))}"></label>
+      <label class="f">Fim<input name="end" type="datetime-local" required value="${esc(m?.end_time.slice(0, 16))}"></label>
+    </div>
+    <label class="f">Repetição<select name="rec">
+      ${[["", "Não repete"], ["weekly", "Toda semana"], ["monthly", "Todo mês"]].map(([v, l]) => `<option value="${v}" ${(m?.recurrence || "") === v ? "selected" : ""}>${l}</option>`).join("")}
+    </select></label>
+    <fieldset><legend>Participantes (você entra como organizador)</legend>${people}</fieldset>`,
+    async fd => {
+      const body = JSON.stringify({ title: fd.get("title"), room: fd.get("room") || null, start_time: fd.get("start"),
+        end_time: fd.get("end"), recurrence: fd.get("rec") || null, participant_ids: fd.getAll("p").map(Number) });
+      await api(MEETINGS_API, m ? "/meetings/" + m.id : "/meetings", { method: m ? "PUT" : "POST", body });
+      toast(m ? "Reunião atualizada" : "Reunião agendada");
+    });
+}
+
+
+// ---------- documentos ----------
+const TYPES = { ata: "Ata", processo: "Processo", outro: "Outro" };
+const ACCEPT = ".pdf,.doc,.docx,.odt,.rtf,.txt,.md,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg";
+let docs = [], dfilter = { meeting: "", type: "" };
+const fmtSize = b => b < 1048576 ? Math.max(1, Math.round(b / 1024)) + " kB" : (b / 1048576).toFixed(1) + " MB";
+const fmtShort = s => new Date(s).toLocaleDateString("pt-BR");
+const meetingLabel = m => `${m.title} — ${fmtShort(m.start_time)}`;
+const typeOptions = sel => Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${v}</option>`).join("");
+
+function showTab(name) {
+  document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  ["meetings", "documents", "account"].forEach(id => $("#" + id).hidden = id !== name);
+  if (name === "documents") loadDocs();
+}
+
+async function loadDocs() {
+  const q = new URLSearchParams();
+  if (dfilter.meeting) q.set("meeting_id", dfilter.meeting);
+  if (dfilter.type) q.set("doc_type", dfilter.type);
+  try { docs = await api(API, "/documents" + (q.size ? "?" + q : "")); }
+  catch (e) { docs = []; toast(e.message); }
+  renderDocs();
+}
+
+function renderDocs() {
+  $("#dmeet").innerHTML = '<option value="">Todas as reuniões</option>' +
+    meetings.map(m => `<option value="${m.id}" ${String(m.id) === dfilter.meeting ? "selected" : ""}>${esc(meetingLabel(m))}</option>`).join("");
+  $("#dtype").innerHTML = '<option value="">Todos os tipos</option>' + typeOptions(dfilter.type);
+  $("#doc-list").innerHTML = docs.length ? docs.map(docCard).join("")
+    : `<div class="empty">Nenhum documento encontrado. Use “Novo documento” para anexar uma ata, um processo ou outro arquivo a uma reunião.</div>`;
+}
+
+function docCard(d) {
+  const m = meetings.find(x => x.id === d.meeting_id), off = m?.status === "cancelled";
+  const mine = d.created_by === me.id || m?.organizer_id === me.id;
+  const by = d.uploaded_by === me.id ? "você" : (userName(d.uploaded_by) || "#" + d.uploaded_by);
+  const meta = [d.filename, fmtSize(d.size), m ? meetingLabel(m) : "Reunião #" + d.meeting_id, `Enviado por ${by} em ${fmtShort(d.file_uploaded_at)}`].map(esc).join(" · ");
+  return `<article class="meet">
+    <div class="time">${esc(TYPES[d.doc_type] || d.doc_type)}<small>v${d.current_version}</small></div>
+    <div><div class="t">${esc(d.title)}</div>${d.description ? `<div class="meta">${esc(d.description)}</div>` : ""}<div class="meta">${meta}</div></div>
+    <div class="acts">
+      <button class="ghost" data-act="dl-doc" data-id="${d.id}" data-name="${esc(d.filename)}">Baixar</button>
+      ${d.version_count > 1 ? `<button class="ghost" data-act="history" data-id="${d.id}">Histórico (${d.version_count})</button>` : ""}
+      ${off ? "" : `<button class="ghost" data-act="new-version" data-id="${d.id}">Nova versão</button>`}
+      ${mine ? `<button class="ghost" data-act="edit-doc" data-id="${d.id}">Editar</button><button class="ghost danger" data-act="del-doc" data-id="${d.id}">Excluir</button>` : ""}
+    </div></article>`;
+}
+
+async function downloadFile(path, filename) {
+  const r = await fetch(API + path, { headers: { Authorization: "Bearer " + token } });
+  if (!r.ok) {
+    if (r.status === 401) logout("Sua sessão expirou. Entre novamente.");
+    throw new Error((await r.json().catch(() => null))?.detail || "Erro " + r.status);
+  }
+  const url = URL.createObjectURL(await r.blob()), a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function docDialog() {
+  const open = meetings.filter(m => m.status !== "cancelled");
+  if (!open.length) return toast("Você não tem reuniões ativas para anexar documentos.");
+  openDialog("Novo documento", `
+    <label class="f">Reunião<select name="meeting_id" required>${open.map(m => `<option value="${m.id}" ${String(m.id) === dfilter.meeting ? "selected" : ""}>${esc(meetingLabel(m))}</option>`).join("")}</select></label>
+    <div class="two"><label class="f">Tipo<select name="doc_type">${typeOptions("ata")}</select></label>
+      <label class="f">Título<input name="title" required maxlength="200"></label></div>
+    <label class="f">Descrição (opcional)<input name="description" maxlength="1000"></label>
+    <label class="f">Arquivo (até 10 MB)<input name="file" type="file" required accept="${ACCEPT}"></label>`,
+    async fd => { await api(API, "/documents", { method: "POST", body: fd }); toast("Documento enviado"); });
+}
+
+function versionDialog(d) {
+  openDialog("Nova versão", `<p class="meta">${esc(d.title)} — atual: v${d.current_version}. As versões anteriores ficam no histórico.</p>
+    <label class="f">Arquivo (até 10 MB)<input name="file" type="file" required accept="${ACCEPT}"></label>`,
+    async fd => { await api(API, `/documents/${d.id}/versions`, { method: "POST", body: fd }); toast("Nova versão enviada"); });
+}
+
+function editDocDialog(d) {
+  openDialog("Editar documento", `
+    <div class="two"><label class="f">Tipo<select name="doc_type">${typeOptions(d.doc_type)}</select></label>
+      <label class="f">Título<input name="title" required maxlength="200" value="${esc(d.title)}"></label></div>
+    <label class="f">Descrição<input name="description" maxlength="1000" value="${esc(d.description)}"></label>`,
+    async fd => {
+      await api(API, "/documents/" + d.id, { method: "PUT", body: JSON.stringify({ doc_type: fd.get("doc_type"), title: fd.get("title"), description: fd.get("description") }) });
+      toast("Documento atualizado");
+    });
+}
+
+async function historyDialog(id) {
+  const d = await api(API, "/documents/" + id);
+  openDialog("Histórico de versões", `<p class="meta">${esc(d.title)}</p>` + d.versions.map(v => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0">
+      <span><b>v${v.version}</b> · ${esc(v.filename)} · ${fmtSize(v.size)} · ${esc(v.uploaded_by === me.id ? "você" : userName(v.uploaded_by) || "#" + v.uploaded_by)} · ${fmtShort(v.uploaded_at)}</span>
+      <button type="button" class="ghost" data-act="dl-version" data-id="${d.id}" data-v="${v.version}" data-name="${esc(v.filename)}">Baixar</button></div>`).join(""), null);
+}
+
+$("#dmeet").onchange = e => { dfilter.meeting = e.target.value; loadDocs(); };
+$("#dtype").onchange = e => { dfilter.type = e.target.value; loadDocs(); };
+
+// ---------- conta ----------
+$("#pform").onsubmit = async ev => {
+  ev.preventDefault(); const fd = new FormData(ev.target);
+  try {
+    me = await api(AUTH_API, "/auth/me", { method: "PUT", body: JSON.stringify({ name: fd.get("name"), email: fd.get("email") }) });
+    $("#who").textContent = me.name; toast("Dados salvos"); await load();
+  } catch (e) { toast(e.message); }
+};
+$("#wform").onsubmit = async ev => {
+  ev.preventDefault(); const fd = new FormData(ev.target);
+  try {
+    await api(AUTH_API, "/auth/change-password", { method: "POST", body: JSON.stringify({ current_password: fd.get("cur"), new_password: fd.get("new") }) });
+    ev.target.reset(); toast("Senha alterada");
+  } catch (e) { toast(e.message); }
+};
+$("#delacc").onclick = async () => {
+  if (!confirm("Excluir sua conta definitivamente?")) return;
+  try { await api(AUTH_API, "/auth/me", { method: "DELETE" }); logout("Conta excluída."); }
+  catch (e) { toast(e.message); }
+};
+
+document.addEventListener("click", async ev => {
+  if (ev.target.closest("[data-close]")) return $("#dlg").close();
+  const tab = ev.target.closest("[data-tab]");
+  if (tab) return showTab(tab.dataset.tab);
+  const b = ev.target.closest("[data-act]"); if (!b) return;
+  const id = Number(b.dataset.id);
+  try {
+    switch (b.dataset.act) {
+      case "new-meeting": return meetingDialog();
+      case "new-doc": return docDialog();
+      case "meeting-docs": dfilter.meeting = String(id); dfilter.type = ""; return showTab("documents");
+      case "dl-doc": return downloadFile(`/documents/${id}/download`, b.dataset.name);
+      case "dl-version": return downloadFile(`/documents/${id}/download?version=${b.dataset.v}`, b.dataset.name);
+      case "new-version": return versionDialog(docs.find(d => d.id === id));
+      case "history": return historyDialog(id);
+      case "edit-doc": return editDocDialog(docs.find(d => d.id === id));
+      case "del-doc":
+        if (!confirm("Excluir este documento e todas as suas versões?")) return;
+        await api(API, "/documents/" + id, { method: "DELETE" }); toast("Documento excluído"); return loadDocs();
+      case "edit-meeting": return meetingDialog(meetings.find(m => m.id === id));
+      case "cancel-meeting":
+        if (!confirm("Cancelar esta reunião? O horário ficará livre para os participantes.")) return;
+        await api(MEETINGS_API, "/meetings/" + id, { method: "DELETE" }); toast("Reunião cancelada"); break;
+    }
+    await load();
+  } catch (err) { toast(err.message); }
+});
+$("#hide").addEventListener("change", e => { hideCancelled = e.target.checked; render(); });
+token ? startApp() : showAuth();
+</script>
+</body>
+</html>
